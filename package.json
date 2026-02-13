@@ -11,7 +11,7 @@
     "test": "hardhat test",
     "demo:success": "node demo/demo-success.js",
     "demo:failure": "node demo/demo-failure.js",
-    "start": "npx http-server frontend -p 8000 -o"
+    "start": "node server.js"
   },
   "keywords": [
     "blockchain",
@@ -30,6 +30,7 @@
     "hardhat": "^2.19.0"
   },
   "dependencies": {
+    "express": "^4.18.2",
     "@openzeppelin/contracts": "^5.4.0"
   }
 }

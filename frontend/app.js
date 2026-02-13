@@ -256,6 +256,9 @@ async function connectWallet() {
         // Update balances
         await updateBalances();
 
+        // Start listening for incoming payments
+        setupPaymentListener(userAddress);
+
         logConsole('success', `✅ Connected to ${userAddress}`);
         logConsole('info', `Network: ${CONFIG.CHAIN_NAME} (${CONFIG.CHAIN_ID})`);
 
@@ -1151,4 +1154,37 @@ async function executeRefund(intentId, amount, merchantAddress) {
     } finally {
         hideLoading();
     }
+}
+
+// Real-time Payment Listener
+function setupPaymentListener(merchantAddress) {
+    if (!paymentProcessorContract) return;
+
+    // Filter for SettlementExecuted events where this user is the merchant
+    const filter = paymentProcessorContract.filters.SettlementExecuted(null, null, merchantAddress);
+
+    // Remove existing listeners to prevent duplicates
+    paymentProcessorContract.removeAllListeners(filter);
+
+    paymentProcessorContract.on(filter, (intentId, user, merchant, amount, mandateHash, event) => {
+        const formattedAmount = ethers.utils.formatUnits(amount, CONFIG.USDC_DECIMALS);
+        const payer = `${user.substring(0, 6)}...${user.substring(38)}`;
+
+        // Visual notification
+        logConsole('success', `💰 PAYMENT RECEIVED! ${formattedAmount} USDC from ${payer}`);
+        logConsole('info', `   ID: ${intentId}`);
+
+        // Simple visual cue
+        const originalTitle = document.title;
+        document.title = "💰 Payment Received!";
+        setTimeout(() => document.title = originalTitle, 5000);
+
+        // Update balances
+        updateBalances();
+
+        // If we have a QR code generated for this amount, we could auto-clear it or show success
+        // But for now, just the notification is enough.
+    });
+
+    logConsole('info', '📡 Listening for incoming payments...');
 }
