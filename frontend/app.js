@@ -889,7 +889,7 @@ async function payForCart() {
                 refundBtn.style.opacity = '1';
                 refundBtn.style.cursor = 'pointer';
                 refundBtn.innerHTML = '<span class="btn-icon">↩️</span> Refund Last Transaction';
-                refundBtn.onclick = () => executeRefund(currentAuthorization.intent_id, total, merchant);
+                refundBtn.onclick = () => executeRefund(currentAuthorization.intent_id, total, merchant, userAddress);
                 logConsole('info', '↩️ Refund available for this transaction');
             }
 
@@ -1092,7 +1092,7 @@ function checkPaymentParams() {
 
 let lastSuccessfulIntentId = null;
 
-async function executeRefund(intentId, amount, merchantAddress) {
+async function executeRefund(intentId, amount, merchantAddress, payerAddress) {
     if (!intentId) {
         logConsole('error', '❌ No transaction ID provided for refund');
         return;
@@ -1120,7 +1120,7 @@ async function executeRefund(intentId, amount, merchantAddress) {
 
         // Create refund agent instance
         const refundAgent = new RefundAgentFrontend(paymentProcessorContract);
-        const refundAuth = await refundAgent.createRefundAuthorization(intentId, signer, amount, userAddress);
+        const refundAuth = await refundAgent.createRefundAuthorization(intentId, signer, amount, payerAddress);
 
         logConsole('success', '✅ Refund authorized by merchant');
 
@@ -1244,7 +1244,7 @@ function addIncomingPaymentToUI(intentId, user, amount, txHash) {
 
         btn.onclick = async () => {
             if (confirm(`Refund ${amount} USDC to ${shortUser}?`)) {
-                await executeRefund(intentId, amount, userAddress); // userAddress is ME (Merchant)
+                await executeRefund(intentId, amount, userAddress, user); // userAddress is ME (Merchant), user is Customer
             }
         };
 
