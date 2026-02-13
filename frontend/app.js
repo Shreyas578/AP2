@@ -204,6 +204,16 @@ function setupEventListeners() {
 async function connectWallet() {
     try {
         if (!window.ethereum) {
+            // Check if mobile
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const currentUrl = window.location.href.replace(/^https?:\/\//, '');
+                const deepLink = `https://metamask.app.link/dapp/${currentUrl}`;
+                if (confirm('MetaMask not detected. Open in MetaMask App?')) {
+                    window.location.href = deepLink;
+                }
+                return;
+            }
             alert('MetaMask is not installed! Please install MetaMask to use this dApp.');
             return;
         }
@@ -1172,7 +1182,9 @@ function setupPaymentListener(merchantAddress) {
 
         // Visual notification
         logConsole('success', `💰 PAYMENT RECEIVED! ${formattedAmount} USDC from ${payer}`);
-        logConsole('info', `   ID: ${intentId}`);
+
+        // Add to Merchant Dashboard
+        addIncomingPaymentToUI(intentId, user, formattedAmount, event.transactionHash);
 
         // Simple visual cue
         const originalTitle = document.title;
@@ -1181,10 +1193,68 @@ function setupPaymentListener(merchantAddress) {
 
         // Update balances
         updateBalances();
-
-        // If we have a QR code generated for this amount, we could auto-clear it or show success
-        // But for now, just the notification is enough.
     });
 
     logConsole('info', '📡 Listening for incoming payments...');
+}
+
+function addIncomingPaymentToUI(intentId, user, amount, txHash) {
+    const section = document.getElementById('merchantSection');
+    const container = document.getElementById('incomingPaymentsList');
+    const countBadge = document.getElementById('paymentCount');
+
+    if (section && container) {
+        section.style.display = 'block';
+
+        // Remove "No payments" message if exists
+        const noPaymentsMsg = container.querySelector('div');
+        if (noPaymentsMsg && noPaymentsMsg.innerText.includes('No incoming payments')) {
+            container.innerHTML = '';
+        }
+
+        const div = document.createElement('div');
+        div.className = 'payment-item';
+        div.style.background = 'white';
+        div.style.padding = '1rem';
+        div.style.borderRadius = '0.5rem';
+        div.style.marginBottom = '0.5rem';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        div.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+
+        // Shorten user address
+        const shortUser = `${user.substring(0, 6)}...${user.substring(38)}`;
+
+        div.innerHTML = `
+            <div>
+                <div style="font-weight: bold; color: var(--success);">+${amount} USDC</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">From: <a href="${CONFIG.BLOCK_EXPLORER}/address/${user}" target="_blank">${shortUser}</a></div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">${new Date().toLocaleTimeString()}</div>
+            </div>
+        `;
+
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.style.fontSize = '0.8rem';
+        btn.style.padding = '0.25rem 0.5rem';
+        btn.style.borderColor = 'var(--error)';
+        btn.style.color = 'var(--error)';
+        btn.innerHTML = '↪️ Refund';
+
+        btn.onclick = async () => {
+            if (confirm(`Refund ${amount} USDC to ${shortUser}?`)) {
+                await executeRefund(intentId, amount, userAddress); // userAddress is ME (Merchant)
+            }
+        };
+
+        div.appendChild(btn);
+        container.prepend(div);
+
+        // Update count
+        if (countBadge) {
+            const currentCount = parseInt(countBadge.textContent || '0');
+            countBadge.textContent = currentCount + 1;
+        }
+    }
 }

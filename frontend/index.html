@@ -406,6 +406,25 @@
                 </div>
             </section>
 
+            <!-- Merchant Dashboard (Incoming Payments) -->
+            <section class="merchant-section" id="merchantSection" style="display: none;">
+                <h2 class="section-title">🏪 Merchant Dashboard</h2>
+                <div class="merchant-dashboard-container"
+                    style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 0.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Incoming Payments</h3>
+                        <span class="badge" id="paymentCount"
+                            style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 1rem; font-size: 0.8rem;">0</span>
+                    </div>
+                    <div id="incomingPaymentsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 1rem;">
+                            No incoming payments detected yet on this session.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Receipt Viewer -->
             <section class="receipt-section" id="receiptSection" style="display: none;">
                 <h2 class="section-title">🧾 Payment Receipt</h2>
