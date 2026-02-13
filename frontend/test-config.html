@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONFIG Test</title>
+</head>
+
+<body>
+    <h1>Testing CONFIG Load</h1>
+    <div id="output"></div>
+
+    <script src="config.js"></script>
+    <script>
+        const output = document.getElementById('output');
+
+        // Check if CONFIG is loaded
+        output.innerHTML += `<p>CONFIG loaded: ${typeof CONFIG !== 'undefined'}</p>`;
+        output.innerHTML += `<p>PRODUCTS count: ${CONFIG ? Object.keys(CONFIG.PRODUCTS).length : 'N/A'}</p>`;
+        output.innerHTML += `<p>First product key: ${CONFIG ? Object.keys(CONFIG.PRODUCTS)[0] : 'N/A'}</p>`;
+
+        // Test product lookup
+        const testProduct = CONFIG.PRODUCTS['tea-bag'];
+        output.innerHTML += `<p>Test product 'tea-bag': ${testProduct ? JSON.stringify(testProduct) : 'NOT FOUND'}</p>`;
+
+        // List first 10 products
+        output.innerHTML += `<h2>First 10 Products:</h2>`;
+        Object.entries(CONFIG.PRODUCTS).slice(0, 10).forEach(([key, product]) => {
+            output.innerHTML += `<p>${key}: ${product.name} - $${product.price}</p>`;
+        });
+    </script>
+</body>
+
+</html>
