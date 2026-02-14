@@ -423,54 +423,74 @@
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Receipt Viewer -->
-            <section class="receipt-section" id="receiptSection" style="display: none;">
-                <h2 class="section-title">🧾 Payment Receipt</h2>
-                <div class="receipt-container">
-                    <div class="receipt-header">
-                        <div class="receipt-status" id="receiptStatus">SUCCESS</div>
-                        <div class="receipt-timestamp" id="receiptTimestamp"></div>
+                <div class="merchant-dashboard-container"
+                    style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Refund Requests</h3>
+                        <button id="refreshRequestsBtn" class="btn btn-sm btn-secondary">🔄 Refresh</button>
                     </div>
-                    <div class="receipt-body">
-                        <pre class="receipt-json" id="receiptJson"></pre>
-                    </div>
-                    <div class="receipt-actions">
-                        <button class="btn btn-secondary" id="downloadReceiptBtn">
-                            <span class="btn-icon">📥</span>
-                            Download JSON
-                        </button>
-                        <button class="btn btn-secondary" id="viewOnExplorerBtn">
-                            <span class="btn-icon">🔍</span>
-                            View on BaseScan
-                        </button>
+                    <div id="refundRequestsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 1rem;">
+                            No pending refund requests.
+                        </div>
                     </div>
                 </div>
-            </section>
+        </div>
+        </section>
 
-            <!-- Contract Info -->
-            <section class="info-section">
-                <h2 class="section-title">📋 Contract Information</h2>
-                <div class="info-grid">
-                    <div class="info-card">
-                        <div class="info-label">Network</div>
-                        <div class="info-value">Base Sepolia (84532)</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">USDC Contract</div>
-                        <div class="info-value mono">0x036CbD...f7e</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">PaymentProcessor</div>
-                        <div class="info-value mono" id="processorAddress">Not deployed</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">ReceiptRegistry</div>
-                        <div class="info-value mono" id="registryAddress">Not deployed</div>
-                    </div>
+        <!-- Receipt Viewer -->
+        <section class="receipt-section" id="receiptSection" style="display: none;">
+            <h2 class="section-title">🧾 Payment Receipt</h2>
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <div class="receipt-status" id="receiptStatus">SUCCESS</div>
+                    <div class="receipt-timestamp" id="receiptTimestamp"></div>
                 </div>
-            </section>
+                <div class="receipt-body">
+                    <pre class="receipt-json" id="receiptJson"></pre>
+                </div>
+                <div class="receipt-actions">
+                    <button class="btn btn-secondary" id="downloadReceiptBtn">
+                        <span class="btn-icon">📥</span>
+                        Download JSON
+                    </button>
+                    <button class="btn btn-secondary" id="viewOnExplorerBtn">
+                        <span class="btn-icon">🔍</span>
+                        View on BaseScan
+                    </button>
+                    <button class="btn btn-secondary" id="requestRefundBtn"
+                        style="border-color: var(--error); color: var(--error);">
+                        <span class="btn-icon">↩️</span>
+                        Request Refund
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contract Info -->
+        <section class="info-section">
+            <h2 class="section-title">📋 Contract Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">Network</div>
+                    <div class="info-value">Base Sepolia (84532)</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">USDC Contract</div>
+                    <div class="info-value mono">0x036CbD...f7e</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">PaymentProcessor</div>
+                    <div class="info-value mono" id="processorAddress">Not deployed</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">ReceiptRegistry</div>
+                    <div class="info-value mono" id="registryAddress">Not deployed</div>
+                </div>
+            </div>
+        </section>
 
         </div>
     </main>

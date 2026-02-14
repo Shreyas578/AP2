@@ -196,6 +196,11 @@ function setupEventListeners() {
         copyQRBtn.addEventListener('click', copyQRLink);
     }
 
+    const refreshRequestsBtn = document.getElementById('refreshRequestsBtn');
+    if (refreshRequestsBtn) {
+        refreshRequestsBtn.addEventListener('click', fetchRefundRequests);
+    }
+
     // Check for QR code parameters on load
     checkPaymentParams();
 }
@@ -614,6 +619,11 @@ function displayReceipt(receipt) {
         viewOnExplorerBtn.onclick = () => {
             window.open(`${CONFIG.BLOCK_EXPLORER}/tx/${receipt.settlement_tx}`, '_blank');
         };
+    }
+
+    const reqBtn = document.getElementById('requestRefundBtn');
+    if (reqBtn) {
+        reqBtn.onclick = () => requestRefund(receipt.intent_id, receipt.amount);
     }
 
     receiptSection.scrollIntoView({ behavior: 'smooth' });
@@ -1256,5 +1266,105 @@ function addIncomingPaymentToUI(intentId, user, amount, txHash) {
             const currentCount = parseInt(countBadge.textContent || '0');
             countBadge.textContent = currentCount + 1;
         }
+    }
+}
+
+async function requestRefund(intentId, amount) {
+    if (!confirm(`Request refund of ${amount} USDC from merchant?`)) return;
+
+    try {
+        showLoading('Sending refund request...');
+        const response = await fetch('/api/refund-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                intentId,
+                user: userAddress,
+                amount,
+                reason: 'Customer requested'
+            })
+        });
+        const data = await response.json();
+        hideLoading();
+
+        if (data.success) {
+            alert('Refund requested successfully! Merchant has been notified.');
+            const btn = document.getElementById('requestRefundBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Requested';
+            }
+        } else {
+            alert('Failed to request refund: ' + data.message);
+        }
+    } catch (e) {
+        hideLoading();
+        console.error(e);
+        alert('Error requesting refund');
+    }
+}
+
+async function fetchRefundRequests() {
+    try {
+        const response = await fetch('/api/refund-requests');
+        const requests = await response.json();
+        const list = document.getElementById('refundRequestsList');
+        if (!list) return;
+
+        if (requests.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">No pending refund requests.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        requests.forEach(req => {
+            const div = document.createElement('div');
+            div.className = 'payment-item';
+            div.style.background = 'white';
+            div.style.padding = '1rem';
+            div.style.borderRadius = '0.5rem';
+            div.style.marginBottom = '0.5rem';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            div.style.borderLeft = '4px solid var(--warning)';
+            div.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+
+            // Shorten user
+            const shortUser = `${req.user.substring(0, 6)}...${req.user.substring(38)}`;
+
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight: bold;">Refund Request: ${req.amount} USDC</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">User: ${shortUser}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Reason: ${req.reason}</div>
+                </div>
+            `;
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-primary';
+            btn.style.fontSize = '0.8rem';
+            btn.style.padding = '0.25rem 0.5rem';
+            btn.textContent = '✅ Approve';
+
+            btn.onclick = async () => {
+                if (confirm(`Approve refund of ${req.amount} USDC to ${shortUser}?`)) {
+                    await executeRefund(req.intentId, req.amount, userAddress, req.user); // userAddress=Merchant(Me), req.user=Payer
+                    // Mark as processed
+                    await fetch('/api/refund-processed', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ intentId: req.intentId })
+                    });
+                    fetchRefundRequests(); // Refresh UI
+                }
+            };
+
+            div.appendChild(btn);
+            list.appendChild(div);
+        });
+
+    } catch (e) {
+        console.error('Error fetching refund requests:', e);
     }
 }
