@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard - AP2 Payment System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>🏪 Merchant Dashboard</h1>
+                    <p class="subtitle">Manage Payments & Refunds</p>
+                </div>
+                <div class="header-actions">
+                    <div class="network-indicator" id="networkIndicator">
+                        <span class="status-dot"></span>
+                        <span class="network-text">Not Connected</span>
+                    </div>
+                    <button class="btn btn-primary" id="connectWalletBtn">
+                        <span class="btn-icon">🔐</span>
+                        Connect Merchant Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Wallet Info Panel -->
+    <div class="wallet-panel" id="walletPanel" style="display: none;">
+        <div class="container">
+            <div class="wallet-grid">
+                <div class="wallet-card">
+                    <div class="wallet-label">Merchant Address</div>
+                    <div class="wallet-value" id="walletAddress">0x...</div>
+                </div>
+                <div class="wallet-card highlight">
+                    <div class="wallet-label">💵 USDC Balance</div>
+                    <div class="wallet-value large" id="usdcBalance">0.00</div>
+                </div>
+                <div class="wallet-card">
+                    <div class="wallet-label">ETH Balance</div>
+                    <div class="wallet-value" id="ethBalance">0.00</div>
+                </div>
+                <div class="wallet-card">
+                    <div class="wallet-label">Total Received</div>
+                    <div class="wallet-value" id="totalReceived">0.00 USDC</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            
+            <!-- Quick Actions -->
+            <section class="demo-section">
+                <h2 class="section-title">⚡ Quick Actions</h2>
+                <div class="demo-grid">
+                    <div class="demo-card">
+                        <h3 class="card-title">
+                            <span class="card-icon">🔄</span>
+                            Actions
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-info btn-block" id="loadPaymentsBtn" disabled>
+                                <span class="btn-icon">📊</span>
+                                Load My Payments
+                            </button>
+                            <button class="btn btn-secondary btn-block" id="refreshBalanceBtn" disabled>
+                                <span class="btn-icon">🔄</span>
+                                Refresh Balance
+                            </button>
+                            <button class="btn btn-primary btn-block" onclick="window.open('index.html', '_blank')">
+                                <span class="btn-icon">🛒</span>
+                                Open Customer App
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Received Payments -->
+            <section class="payments-section" id="paymentsSection" style="display: none;">
+                <h2 class="section-title">💰 Received Payments</h2>
+                <div class="payments-container">
+                    <table class="history-table" style="width: 100%; border-collapse: collapse; background: var(--bg-secondary); border-radius: 0.5rem;">
+                        <thead>
+                            <tr style="background: var(--bg-tertiary); text-align: left;">
+                                <th style="padding: 0.75rem;">Date</th>
+                                <th style="padding: 0.75rem;">Customer</th>
+                                <th style="padding: 0.75rem;">Amount</th>
+                                <th style="padding: 0.75rem;">Status</th>
+                                <th style="padding: 0.75rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    Click "Load My Payments" to view received payments
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Refund Form -->
+            <section class="refund-section" id="refundSection" style="display: none;">
+                <h2 class="section-title">↩️ Process Refund</h2>
+                <div class="refund-container" style="background: var(--bg-secondary); padding: 2rem; border-radius: 0.5rem;">
+                    <div class="refund-form">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Transaction to Refund:</label>
+                            <div id="refundTransactionInfo" style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; font-family: monospace; font-size: 0.875rem;">
+                                Select a transaction to refund
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label for="refundAmount" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Refund Amount (USDC):</label>
+                            <input type="number" id="refundAmount" class="input" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label for="refundReason" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Reason for Refund:</label>
+                            <select id="refundReason" class="input">
+                                <option value="customer_request">Customer Request</option>
+                                <option value="defective_product">Defective Product</option>
+                                <option value="wrong_item">Wrong Item Sent</option>
+                                <option value="duplicate_charge">Duplicate Charge</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-warning" id="processRefundBtn" disabled>
+                                <span class="btn-icon">↩️</span>
+                                Process Refund
+                            </button>
+                            <button class="btn btn-secondary" id="cancelRefundBtn">
+                                <span class="btn-icon">❌</span>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status Console -->
+            <section class="console-section">
+                <div class="console-header">
+                    <h3>📊 Merchant Console</h3>
+                    <button class="btn btn-sm" id="clearConsoleBtn">Clear</button>
+                </div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-message info">
+                        <span class="timestamp">[Ready]</span>
+                        <span class="message">Connect your merchant wallet to begin...</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 AP2 Merchant Dashboard | Manage Your Payments</p>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal" style="display: none;">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <p id="loadingText">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="config.js"></script>
+    <script src="merchant-dashboard.js"></script>
+</body>
+</html>

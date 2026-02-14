@@ -1398,3 +1398,62 @@ async function fetchRefundRequests() {
         console.error('Error fetching refund requests:', e);
     }
 }
+
+// ============================================================================
+// REFUND DEMO FUNCTION
+// ============================================================================
+
+async function demoRefundFlow() {
+    try {
+        showLoading('Processing refund demo...');
+        logConsole('warning', '↩️ REFUND FLOW DEMO');
+        logConsole('info', '━'.repeat(60));
+        logConsole('info', 'This is a DEMO of the refund process.');
+        logConsole('info', 'For REAL refunds, use the Merchant Dashboard!');
+        logConsole('info', '━'.repeat(60));
+        
+        logConsole('info', '🏪 Step 1: Merchant receives refund request...');
+        await delay(1000);
+        logConsole('success', '✅ Customer requests refund for defective product');
+        
+        logConsole('info', '🔍 Step 2: Merchant reviews transaction...');
+        await delay(1000);
+        logConsole('success', '✅ Transaction verified: $50 USDC payment found');
+        
+        logConsole('info', '✍️ Step 3: Merchant approves refund...');
+        await delay(1000);
+        logConsole('success', '✅ Refund approved: $50 USDC');
+        
+        logConsole('info', '💸 Step 4: USDC transferred back to customer...');
+        await delay(1500);
+        logConsole('success', '✅ Transfer completed: Customer refunded');
+        
+        logConsole('info', '🧾 Step 5: Refund receipt generated...');
+        await delay(500);
+        logConsole('success', '✅ Refund receipt created and stored');
+        
+        logConsole('info', '━'.repeat(60));
+        logConsole('success', '🎉 REFUND DEMO COMPLETED!');
+        logConsole('info', '');
+        logConsole('info', '🏪 WANT TO TRY REAL REFUNDS?');
+        logConsole('info', '   1. Click "Merchant Dashboard" button');
+        logConsole('info', '   2. Connect with merchant wallet');
+        logConsole('info', '   3. View received payments');
+        logConsole('info', '   4. Click "Refund" on any payment');
+        logConsole('info', '   5. Process real USDC refunds!');
+        logConsole('info', '━'.repeat(60));
+        
+        hideLoading();
+        
+        // Show alert about real merchant dashboard
+        setTimeout(() => {
+            if (confirm('This was a demo. Would you like to open the REAL Merchant Dashboard to process actual refunds?')) {
+                window.open('merchant-dashboard.html', '_blank');
+            }
+        }, 1000);
+        
+    } catch (error) {
+        hideLoading();
+        logConsole('error', `❌ Demo failed: ${error.message}`);
+    }
+}

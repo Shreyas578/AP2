@@ -401,6 +401,8 @@ const CONFIG = {
         "function refundSettlement(bytes32 intentId, bytes merchantSignature) external",
         "function isIntentRefunded(bytes32 intentId) external view returns (bool)",
         "function requestRefund(bytes32 intentId) external",
+        "function getSettlement(bytes32 intentId) external view returns (tuple(bytes32 intentId, address user, address merchant, uint256 amount, uint256 timestamp, bool exists))",
+        "function getRefundMessageHash(bytes32 intentId, address merchant, address user, uint256 amount) public pure returns (bytes32)",
         "event SettlementExecuted(bytes32 indexed intentId, address indexed user, address indexed merchant, uint256 amount, bytes32 mandateHash)",
         "event RefundExecuted(bytes32 indexed intentId, address indexed merchant, address indexed user, uint256 amount)",
         "event RefundRequested(bytes32 indexed intentId, address indexed user)"
