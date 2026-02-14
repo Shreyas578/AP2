@@ -80,6 +80,16 @@ contract PaymentProcessor {
     );
 
     /**
+     * @notice Emitted when a user requests a refund
+     * @param intentId Unique identifier for the payment intent
+     * @param user Address of the user requesting the refund
+     */
+    event RefundRequested(
+        bytes32 indexed intentId,
+        address indexed user
+    );
+
+    /**
      * @notice Execute an authorized settlement
      * @param intentId Unique payment intent identifier
      * @param user User wallet address (payer)
@@ -280,5 +290,18 @@ contract PaymentProcessor {
      */
     function getSettlement(bytes32 intentId) external view returns (Settlement memory) {
         return settlements[intentId];
+    }
+
+    /**
+     * @notice Request a refund for a specific payment
+     * @param intentId Intent identifier
+     */
+    function requestRefund(bytes32 intentId) external {
+        Settlement memory settlement = settlements[intentId];
+        require(settlement.exists, "Settlement does not exist");
+        require(settlement.user == msg.sender, "Only payer can request refund");
+        require(!refundedIntents[intentId], "Already refunded");
+        
+        emit RefundRequested(intentId, msg.sender);
     }
 }

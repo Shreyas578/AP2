@@ -1194,7 +1194,8 @@ function setupPaymentListener(merchantAddress) {
         logConsole('success', `💰 PAYMENT RECEIVED! ${formattedAmount} USDC from ${payer}`);
 
         // Add to Merchant Dashboard
-        addIncomingPaymentToUI(intentId, user, formattedAmount, event.transactionHash);
+        // Add to Merchant Dashboard
+        // addIncomingPaymentToUI(intentId, user, formattedAmount, event.transactionHash); // Disabled per user request
 
         // Simple visual cue
         const originalTitle = document.title;
@@ -1270,54 +1271,77 @@ function addIncomingPaymentToUI(intentId, user, amount, txHash) {
 }
 
 async function requestRefund(intentId, amount) {
-    if (!confirm(`Request refund of ${amount} USDC from merchant?`)) return;
+    if (!confirm(`Request refund of ${amount} USDC from merchant on-chain? This will require a transaction.`)) return;
 
     try {
-        showLoading('Sending refund request...');
-        const response = await fetch('/api/refund-request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                intentId,
-                user: userAddress,
-                amount,
-                reason: 'Customer requested'
-            })
-        });
-        const data = await response.json();
-        hideLoading();
+        showLoading('Requesting refund on-chain...');
 
-        if (data.success) {
-            alert('Refund requested successfully! Merchant has been notified.');
-            const btn = document.getElementById('requestRefundBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Requested';
-            }
-        } else {
-            alert('Failed to request refund: ' + data.message);
+        // Ensure contract is initialized
+        if (!paymentProcessorContract) {
+            throw new Error("Payment Processor not initialized");
         }
+
+        const tx = await paymentProcessorContract.connect(signer).requestRefund(intentId);
+        logConsole('info', `📝 Refund Request TX: ${tx.hash}`);
+        await tx.wait();
+
+        hideLoading();
+        logConsole('success', `✅ Refund requested on-chain!`);
+        alert('Refund requested successfully on blockchain!');
+
+        const btn = document.getElementById('requestRefundBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Requested (On-Chain)';
+        }
+
     } catch (e) {
         hideLoading();
         console.error(e);
-        alert('Error requesting refund');
+        logConsole('error', `❌ Refund request failed: ${e.message}`);
+        alert('Error requesting refund: ' + e.message);
     }
 }
 
 async function fetchRefundRequests() {
     try {
-        const response = await fetch('/api/refund-requests');
-        const requests = await response.json();
+        if (!paymentProcessorContract) return;
+
+        showLoading('Scanning blockchain for requests...');
         const list = document.getElementById('refundRequestsList');
         if (!list) return;
 
-        if (requests.length === 0) {
-            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">No pending refund requests.</div>';
+        // Get all RefundRequested events
+        // Optimization: In prod, limit block range. For demo, scan all.
+        const filter = paymentProcessorContract.filters.RefundRequested();
+        const events = await paymentProcessorContract.queryFilter(filter);
+
+        list.innerHTML = '';
+        if (events.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">No refund requests found on-chain.</div>';
+            hideLoading();
             return;
         }
 
-        list.innerHTML = '';
-        requests.forEach(req => {
+        let pendingCount = 0;
+
+        for (const event of events) {
+            const { intentId, user } = event.args;
+
+            // Check if already refunded
+            const isRefunded = await paymentProcessorContract.isIntentRefunded(intentId);
+            if (isRefunded) continue;
+
+            // Get settlement details for amount
+            const settlement = await paymentProcessorContract.getSettlement(intentId);
+            const amount = ethers.utils.formatUnits(settlement.amount, CONFIG.USDC_DECIMALS);
+            const merchant = settlement.merchant;
+
+            // Only show if I am the merchant
+            if (merchant.toLowerCase() !== userAddress.toLowerCase()) continue;
+
+            pendingCount++;
+
             const div = document.createElement('div');
             div.className = 'payment-item';
             div.style.background = 'white';
@@ -1331,13 +1355,13 @@ async function fetchRefundRequests() {
             div.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
 
             // Shorten user
-            const shortUser = `${req.user.substring(0, 6)}...${req.user.substring(38)}`;
+            const shortUser = `${user.substring(0, 6)}...${user.substring(38)}`;
 
             div.innerHTML = `
                 <div>
-                    <div style="font-weight: bold;">Refund Request: ${req.amount} USDC</div>
+                    <div style="font-weight: bold;">Refund Request: ${amount} USDC</div>
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">User: ${shortUser}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">Reason: ${req.reason}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Request Block: ${event.blockNumber}</div>
                 </div>
             `;
 
@@ -1345,26 +1369,32 @@ async function fetchRefundRequests() {
             btn.className = 'btn btn-sm btn-primary';
             btn.style.fontSize = '0.8rem';
             btn.style.padding = '0.25rem 0.5rem';
-            btn.textContent = '✅ Approve';
+            btn.textContent = '✅ Approve (Sign)';
 
             btn.onclick = async () => {
-                if (confirm(`Approve refund of ${req.amount} USDC to ${shortUser}?`)) {
-                    await executeRefund(req.intentId, req.amount, userAddress, req.user); // userAddress=Merchant(Me), req.user=Payer
-                    // Mark as processed
-                    await fetch('/api/refund-processed', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ intentId: req.intentId })
-                    });
+                if (confirm(`Approve refund of ${amount} USDC to ${shortUser}?`)) {
+                    await executeRefund(intentId, amount, userAddress, user);
                     fetchRefundRequests(); // Refresh UI
                 }
             };
 
             div.appendChild(btn);
             list.appendChild(div);
-        });
+        }
+
+        if (pendingCount === 0) {
+            list.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">No pending refund requests.</div>';
+        }
+
+        // Show merchant section if requests exist
+        if (pendingCount > 0) {
+            document.getElementById('merchantSection').style.display = 'block';
+        }
+
+        hideLoading();
 
     } catch (e) {
+        hideLoading();
         console.error('Error fetching refund requests:', e);
     }
 }

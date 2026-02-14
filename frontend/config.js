@@ -12,8 +12,8 @@ const CONFIG = {
     USDC_DECIMALS: 6,
 
     // Contract addresses (Auto-loaded from deployment)
-    PAYMENT_PROCESSOR_ADDRESS: "0xAFBcFfc1dCe2D4648F7ee1373967F3FA237290a4",
-    RECEIPT_REGISTRY_ADDRESS: "0x3e3Bd8D09a6f48A25D0E60d5BAd2dec054c9E8C1",
+    PAYMENT_PROCESSOR_ADDRESS: "0xfe823E7f07d1Cc0f2c1DBC35921C15D2442e902E",
+    RECEIPT_REGISTRY_ADDRESS: "0x6BF809F752A983504F61610dFb7c4ef5Df1b47e5",
 
     // Default merchant address (for demo)
     DEFAULT_MERCHANT: "0x0fA104023bf4d13a67fBA13FF91B2e8Fb04Cd920",
@@ -400,8 +400,10 @@ const CONFIG = {
         "function getMessageHash(bytes32 intentId, address user, address merchant, uint256 amount, bytes32 mandateHash, uint256 expiry, uint256 nonce) public pure returns (bytes32)",
         "function refundSettlement(bytes32 intentId, bytes merchantSignature) external",
         "function isIntentRefunded(bytes32 intentId) external view returns (bool)",
+        "function requestRefund(bytes32 intentId) external",
         "event SettlementExecuted(bytes32 indexed intentId, address indexed user, address indexed merchant, uint256 amount, bytes32 mandateHash)",
-        "event RefundExecuted(bytes32 indexed intentId, address indexed merchant, address indexed user, uint256 amount)"
+        "event RefundExecuted(bytes32 indexed intentId, address indexed merchant, address indexed user, uint256 amount)",
+        "event RefundRequested(bytes32 indexed intentId, address indexed user)"
     ],
 
     RECEIPT_REGISTRY_ABI: [
