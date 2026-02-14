@@ -1225,10 +1225,18 @@ function setupRefundListener() {
         // Refresh the list immediately
         fetchRefundRequests();
 
-        // Simple visual cue
+        // Visual cues
         const originalTitle = document.title;
         document.title = "🔔 Refund Requested!";
         setTimeout(() => document.title = originalTitle, 5000);
+
+        // Scroll to merchant section
+        setTimeout(() => {
+            const merchantSection = document.getElementById('merchantSection');
+            if (merchantSection && merchantSection.style.display !== 'none') {
+                merchantSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 500);
     });
 
     // Initial fetch
@@ -1392,10 +1400,11 @@ async function fetchRefundRequests() {
             `;
 
             const btn = document.createElement('button');
-            btn.className = 'btn btn-sm btn-primary';
-            btn.style.fontSize = '0.8rem';
-            btn.style.padding = '0.25rem 0.5rem';
-            btn.textContent = '✅ Approve (Sign)';
+            btn.className = 'btn btn-primary';
+            btn.style.fontSize = '0.9rem';
+            btn.style.padding = '0.5rem 1rem';
+            btn.style.fontWeight = '600';
+            btn.textContent = '✅ Approve & Refund';
 
             btn.onclick = async () => {
                 if (confirm(`Approve refund of ${amount} USDC to ${shortUser}?`)) {
